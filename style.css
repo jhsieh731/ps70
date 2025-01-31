@@ -18,14 +18,14 @@ a {
 }
 
 .container-fluid {
-  padding: 0px;
-  /*padding-bottom: 70px;*/
+  padding: 0px 10px;
+  /* margin-bottom: 70px; */
 }
 
 nav {
   background-color: #dcdcdc;
   color: #EEE7E8;
-  padding: 50px 0px;
+  padding: 50px 10px;
 }
 
 .navbar-nav {
@@ -40,21 +40,37 @@ nav {
   color: #000000;
 }
 
-.nav-link {
-  border: 3px outset #a3a3a3;
-  border-radius: 20px;
-  padding: 10px 30px;
+.nav-link:hover {
   background-color: #a3a3a3;
-  color: #EEE7E8;
   transition: 0.3s;
 }
 
-.nav-link:hover {
-  border: 3px outset #FFFFFF;
-  border-radius: 20px;
-  padding: 10px 30px;
-  background-color: #a3a3a3;
-  transition: 0.3s;
+.navbar-brand:hover {
+    animation: shake 0.5s;
+    animation-iteration-count: infinite;
+}
+
+@keyframes shake {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    10% { transform: translate(-1px, -2px) rotate(-1deg); }
+    20% { transform: translate(-3px, 0px) rotate(1deg); }
+    30% { transform: translate(3px, 2px) rotate(0deg); }
+    40% { transform: translate(1px, -1px) rotate(1deg); }
+    50% { transform: translate(-1px, 2px) rotate(-1deg); }
+    60% { transform: translate(-3px, 1px) rotate(0deg); }
+    70% { transform: translate(3px, 1px) rotate(-1deg); }
+    80% { transform: translate(-1px, -1px) rotate(1deg); }
+    90% { transform: translate(1px, 2px) rotate(0deg); }
+    100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+
+.navbar {
+    margin-bottom: 20px;
+}
+
+.dropdown-item:hover {
+    background-color: #a3a3a3;
+    transition: 0.3s;
 }
 
 #btn {
@@ -88,10 +104,11 @@ nav {
   justify-content: center;
 }
 
-code {
-  background-color: #2d2b33;
-  color: #EEE7E8;
-  font-family: 'Courier New', Courier, monospace;
+.column {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .caption {
@@ -101,6 +118,30 @@ code {
   font-style: italic;
 }
 
-#aboutme {
+.aboutme {
   padding: 20px;
+  font-size: 20px;
+  text-align: center;
+}
+
+.pixel {
+  font-family: "Tiny5", serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+#confettiButton {
+    background-color: red;
+    border-radius: 3em;
+    border: none;
+    margin: auto;
+}
+
+footer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    background-color: white;
+    padding: 10px;
+    margin-top: 20px;
 }
