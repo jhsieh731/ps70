@@ -55,14 +55,73 @@
 </nav>
 
 <body>
+    <div class="textcontainer column">
+        <h3 class="pixel">Week 3: Hand Tools and Fabrication</h3>
+    </div>
     <div class="textcontainer">
-        <p class="margin"> </p>
+        <h4 class="pixel">Assignment: Kinetic Sculpture</h4>
+        <p>
+            For this week's assignment, we had to make a kinetic sculpture containing some circuitry (i.e. a motor) to move the sculpture.
+            I was inspired by a middle school project I made of a DNA sculpture, and I wanted to make something with some cool geometric shapes.
+            My initial sketches of this project had a couple of different mechanisms for making the helix, but despite all my planning, the double
+            helix still didn't turn out exactly as I would have liked (maybe this is something I'll try again later).
+        </p>
 
-        <h3>Week 3: Hand Tools and Fabrication</h3>
+        <div class="flexrow">
+            <img src="./sketch.jpg" alt="Initial Sketches" width="50%">
+        </div>
 
-        <h4>Kinetic Sculpture</h4>
+        <p>
+            I ultimately chose the "easier" option and opted for a central rod with pieces of cardboard glued to it. I used our handy 
+            parametrically-designed finger-joint box template from last week to make the container for the sculpture. I also decided to cut
+            small holes through the cardboard so the dowel could go straight through the cardboard (my original plan was to glue it flat onto the dowel).
+            After digging around the shop, I found an appropriately-sized dowel. I then readjusted my parameters (this admittedly took longer 
+            than 30 seconds because things weren't fully constrained in my original design) and cut out the pieces on the laser cutter.
+        </p>
 
+        <div class="flexrow">
+            <img src="./box.png" alt="box template" width="50%">
+        </div>
 
+        <p>
+            To make the double helix, I attempted to tape down the distances of the cardboard pieces, then twist the tape. But the tape was 
+            a bit stiffer than I expected (and the cardboard pieces were fairly close together), so I ended up just eyeballing how much to twist and 
+            using the distances on the masking tape to gauge how far apart to place the pieces. This worked ok, but my double helix definitely doesn't helix 
+            as much as I would like. On my next iteration, I'll likely drill holes through the cardboard pieces so I can thread some wire throughthem, then
+            hot glue the distances [I'll just need a nice jig so I can hot glue the cardboard pieces to the dowel].
+        </p>
+
+        <p>
+            Since I originally wanted to make a fairly accurate model of DNA, I cut pieces of a thin balloon apart and attached this (and some string) to the
+            sides of the helix as the deoxyribose phosphate backbone. But this looked really ugly so I ended up getting rid of the balloon bits. 
+        </p>
+
+        <div class="flexrow">
+            <img src="./helix.jpeg" alt="helix" width="50%" style="transform:rotate(270deg);">
+        </div>
+
+        <p>
+            Finally, I designed a couple of gears with the built-in spur gears in Fusion 360. I was a bit worried about the motor going too fast, so I 
+            made one of the gears smaller than the other. After consulting with Bobby and a couple of google searches, I realized I just had to keep the
+            module the same between the two gears in order to ensure the teeth fit together. I also added a bit of backlash to the gears so they wouldn't
+            be too tight (I had followed a tutorial on making gear models in Fusion 360, and the dude said it might be a good idea). I made sure 
+            the distance between the two gears was 60mm, since this was the distance I'd measured between where the two rods would be. I ultimately ended up with 
+            gears of module 5 and backlash 0.45, where one gear had 16 teeth and the other had 8.
+        </p>
+
+        <p>I cut the gears out, secured my dowel with a bit of hot glue, then glued my gears in place. I then attached the motor (I had to add a little 
+            bit of a stool so that the gears wouldn't get stuck together), duck-taped everything down, and luckily everything worked!</p>
+
+        <div class="flexrow">
+            <img src="./angled_view.gif" alt="final product: angled" width="40%">
+            <img src="./front_view.gif" alt="final product: front" width="40%">
+        </div>
+
+        <p>
+            I'm pretty happy with this project turned out, and I'd definitely want to add more to it. Besides remaking the helix, I think it would be neat to 
+            try out some different materials & add more moving parts. I was thinking about adding a little cartoon Rosalind Franklin on top of the box, but I 
+            couldn't quite figure out how to do it in time. 
+        </p>
 
 
     </div>
