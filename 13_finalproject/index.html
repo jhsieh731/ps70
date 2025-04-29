@@ -591,9 +591,313 @@
             <a id="btn" href="../08_cnc/copper.ai" download>Download Adobe Illustrator file</a>
         </div>
 
+        <h4 class="pixel">Part 5: Integrated Project</h5>
+
+        <p>
+            For this iteration, I wanted to get the core parts of the final project down, including 
+            using the RF smart plug and more finalized copper pieces. I struggled a lot with getting 
+            good copper connections.
+        </p>
+
+        <h5 class="pixel">RF Smart Plug</h5>
+
+        <p>
+            First, to communicate with the RF smart plug, I had to purchase
+            <a href="https://www.amazon.com/HiLetgo-Wireless-Transmitter-Receiver-Raspberry/dp/B01DKC2EY4">
+                433MHz RF transmitter and receivers
+            </a>. Next, I configured the receiver to listen for the RF signal from the remote (sketch below),
+            with help from <a href="https://randomnerdtutorials.com/rf-433mhz-transmitter-receiver-module-with-arduino/">
+                this Random Nerd Tutorials</a> post.
+        </p>
+
+        <pre style="height: 500px; overflow: scroll;">
+            <code>
+#include &lt;RCSwitch.h&gt;
+
+// Initialize rc-switch objects
+RCSwitch mySwitchReceiver = RCSwitch();
 
 
+void setup() {
+    Serial.begin(9600); // Start Serial Monitor for debugging
 
+    // Initialize transmitter and receiver
+    mySwitchReceiver.enableReceive(7); // Receiver connected to GPIO 7
+    delay(1000); // ensure everything is initialized
+
+}
+
+void loop() {
+    // Check if the receiver has received data
+    if (mySwitchReceiver.available()) {
+        long receivedValue = mySwitchReceiver.getReceivedValue();
+        Serial.print("Received Value: ");
+        Serial.println(receivedValue);
+        Serial.print("Protocol: ");
+        Serial.println(mySwitchReceiver.getReceivedProtocol());
+        Serial.print("Bit length: ");
+        Serial.println(mySwitchReceiver.getReceivedBitlength());
+        Serial.print("Pulse length: ");
+        Serial.println(mySwitchReceiver.getReceivedDelay());
+
+        // Reset the receiver to prepare for the next message
+        mySwitchReceiver.resetAvailable();
+    }
+
+    delay(5000); // Wait 5 seconds before checking again
+}
+
+            </code>
+        </pre>
+
+        <p>
+            I determined that the protocol was 1, bit length was 24, and the pulse length was 180. I also got the following transmit codes:
+            <ul>
+                <li>1 on: 12876364</li>
+                <li>1 off: 12876356</li>
+                <li>2 on: 12876362</li>
+                <li>2 off: 12876354</li>
+                <li>3 on: 12876361</li>
+                <li>3 off: 12876353</li>
+                <li>4 on: 12876365</li>
+                <li>4 off: 12876357</li>
+                <li>5 on: 12876363</li>
+                <li>5 off: 12876355</li>
+            </ul>
+        </p>
+
+        <p>
+            Next, I tried to get the transmitter to turn on the relays/smart plugs. I first tried to just use 
+            a sender sketch, but nothing happened, and I struggled to troubleshoot because I didn't have my receiver set
+            up to make sure that the transmitter was working. I tried to set up two separate microcontrollers, one for 
+            the receiver and one for the transmitter (I had the ESP-WROOM from the drawing machine), but then I couldn't 
+            upload code to the ESP-WROOM, so I then realized I could just wire both receiver and transmitter to a single 
+            microcontroller. The end-result sketch is below; it just echoes receiver/transmits.
+        </p>
+
+        <pre style="height: 500px; overflow: scroll;">
+            <code>
+ #include &lt;RCSwitch.h&gt;
+
+// Initialize rc-switch objects
+RCSwitch mySwitchReceiver = RCSwitch();
+RCSwitch mySwitchTransmitter = RCSwitch();
+
+// Transmitting code (use the same value as in the receiver)
+long transmitValue = 12876364; // This is the code you're transmitting
+
+void setup() {
+    Serial.begin(9600); // Start Serial Monitor for debugging
+
+    // Initialize transmitter and receiver
+    mySwitchReceiver.enableReceive(7); // Receiver connected to GPIO 4
+    mySwitchTransmitter.enableTransmit(6); // Transmitter connected to GPIO 5
+
+    mySwitchTransmitter.setProtocol(1);
+    mySwitchTransmitter.setPulseLength(180);
+    mySwitchTransmitter.setRepeatTransmit(10);
+
+    delay(1000); // Short delay to ensure everything is initialized
+    mySwitchTransmitter.send(transmitValue, 24);
+
+}
+
+void loop() {
+    // Check if the receiver has received data
+    if (mySwitchReceiver.available()) {
+        long receivedValue = mySwitchReceiver.getReceivedValue();
+        Serial.print("Received Value: ");
+        Serial.println(receivedValue);
+        Serial.print("Protocol: ");
+        Serial.println(mySwitchReceiver.getReceivedProtocol());
+        Serial.print("Bit length: ");
+        Serial.println(mySwitchReceiver.getReceivedBitlength());
+        Serial.print("Pulse length: ");
+        Serial.println(mySwitchReceiver.getReceivedDelay());
+
+        // Reset the receiver to prepare for the next message
+        mySwitchReceiver.resetAvailable();
+
+        // If the received value matches the target, transmit the same code
+        if (receivedValue == transmitValue) {
+        Serial.println("Transmitting the same value back...");
+        mySwitchTransmitter.send(transmitValue, 24); // Send the same value (24 is the pulse length in bits)
+        }
+    }
+
+    // Optionally, periodically transmit the value even if no signal is received
+    // Uncomment the lines below if you want to keep sending the code every few seconds.
+    Serial.println("Transmitting...");
+    mySwitchTransmitter.send(transmitValue, 24);
+    delay(5000); // Wait 5 seconds before retransmitting
+}
+
+            </code>
+        </pre>
+
+        <p>
+            I had to make a couple of changes before arriving at the code snippet above, as well as some hardware 
+            fixes. First, I noticed that the receiver only sometimes got the code from the transmitter; I swapped a couple 
+            of transmitters and this was a very consistent problem. After digging through Amazon reviews, 
+            I figured out that the transmitter needed an antenna, and Google said that a loose wire would suffice, so I stuck a 
+            wire through the antenna hole and sends were much more reliably received by the receiver. However, 
+            the relays still weren't turning on, but the transmit codes were correct (a.k.a. equivalent to what the remote was sending). 
+            I noticed that the pulse length wasn't what I had set. I consulted Stack Exchange and switched around two lines of code:
+            the protocol must be set before dictating the pulse length. And then finally my relays turned on.
+        </p>
+
+        <h5 class="pixel">Copper Milling</h5>
+
+        <div class="flexrow">
+            <img src="./copper_base.jpg" width="50%" alt="milling">
+        </div>
+
+        <p>
+            I spent a couple hours milling out the copper pieces from my Adobe Illustrator files above, with 
+            a lot of help from Bobby! I quickly realized that the copper was almost too flat, so it was extremely 
+            sensitive to any curvature from the copper base, meaning that the copper connection was extremely 
+            finicky. When testing the connection, I was at first just using alligator clips on the copper base,
+            but I noticed that this would scratch at the copper, so I soldered some wires through the base of the piece
+            so that the alligators wouldn't scratch.
+        </p>
+
+        <p>
+            Without any additional fixes, 2 of my pieces could form stable copper connections, and the other two 
+            had to be held down with a lot of force before there was any current. I then experimented with using 
+            4 magnets (one in each corner) to hold the pieces down, but I couldn't get the alignment correct: when one orientation formed 
+            a solid connection, turning the piece by 90 degrees resulted in a bad connection, so I ditched this idea 
+            because if I'd wanted to do this, I should have milled the magnet holes into the base piece. [Also note that 
+            to get this to work, all magnets have to be in the same orientation, so I marked the tops of all the magnets so that
+            when attaching, I didn't glue the wrong side down.]
+        </p>
+
+        <p>
+            I then added some copper sheets to each of the pieces, which worked for 3 of the pieces in all 
+            rotations, but the fourth piece was still really finicky. I then added copper sheets to the 
+            two copper strips on the base (for each of the pieces), and then used a strong magnet 
+            taped to the centers of each piece, and this seemed to work ok for the pieces. Sometimes the 
+            pieces still have to be rotated before the connection is registered, but once the orientation is correct,
+            the connection stays consistent, which seems good enough to me (especially once I add the frame 
+            back to the base piece, which should help with rotation/alignment).
+        </p>
+
+        <div class="flexrow" style="justify-content: space-around;">
+            <img src="./full_pieces.JPG" width="30%" alt="pieces">
+            <img src="./wiring.JPG" width="30%" alt="pieces">
+        </div>
+
+        <br>
+
+        <p>
+            Finally, I integrated the RF relay code into my existing code from the MVP; I decided to keep the 
+            receiver on just in case I still had to debug any sends.
+        </p>
+
+        <pre style="height: 500px; overflow: scroll;">
+            <code>
+#include &lt;RCSwitch.h&gt;
+
+int transmitterPin = 6; // GPIO 6
+int receiverPin = 7; // GPIO 7
+int switch1Pin = D0;
+int switch2Pin = D1;
+int switch3Pin = D2;
+int switch4Pin = D3;
+
+
+RCSwitch mySwitchTransmitter = RCSwitch();
+RCSwitch mySwitchReceiver = RCSwitch();
+
+
+// Switch Class
+class Switch {
+    private:
+        int pin;
+        long message; // Unique on message per switch
+        long off_message;
+
+    public:
+        // Constructor
+        Switch(int switchPin, long msg, long off_msg) {
+            pin = switchPin;
+            message = msg;
+            off_message = off_msg;
+            pinMode(pin, INPUT_PULLUP);
+        }
+
+        // Check if switch is pressed
+        bool isOn() {
+            return digitalRead(pin) == LOW; // LOW means pressed
+        }
+
+        // Send ESP-NOW message when pressed
+        void sendMessage() {
+            if (isOn()) {
+                Serial.print(pin);
+                Serial.print(" | Sending on message: ");
+                Serial.println(message);
+
+                mySwitchTransmitter.send(message, 24);
+                delay(300); // Avoid rapid multiple sends
+            } else {
+                Serial.print("Sending off message: ");
+                Serial.println(off_message);
+
+                mySwitchTransmitter.send(off_message, 24);
+                delay(300); // Avoid rapid multiple sends
+            }
+        }
+};
+
+
+Switch switch1(switch1Pin, 12876364, 12876356);
+Switch switch2(switch2Pin, 12876361, 12876353);
+Switch switch3(switch3Pin, 12876365, 12876357);
+Switch switch4(switch4Pin, 12876363, 12876355);
+
+
+void setup() {
+    Serial.begin(9600); // Start Serial Monitor for debugging
+
+    // Initialize transmitter and receiver
+    mySwitchTransmitter.enableTransmit(transmitterPin);
+    mySwitchReceiver.enableReceive(receiverPin);
+
+    mySwitchTransmitter.setProtocol(1);
+    mySwitchTransmitter.setPulseLength(180);
+    mySwitchTransmitter.setRepeatTransmit(10);
+
+    delay(1000); // Short delay to ensure everything is initialized
+}
+
+void loop() {
+    switch1.sendMessage();
+    switch2.sendMessage();
+    switch3.sendMessage();
+    switch4.sendMessage();
+    if (mySwitchReceiver.available()) {
+        long receivedValue = mySwitchReceiver.getReceivedValue();
+        Serial.print("Received Value: ");
+        Serial.println(receivedValue);
+        Serial.print("Protocol: ");
+        Serial.println(mySwitchReceiver.getReceivedProtocol());
+        Serial.print("Bit length: ");
+        Serial.println(mySwitchReceiver.getReceivedBitlength());
+        Serial.print("Pulse length: ");
+        Serial.println(mySwitchReceiver.getReceivedDelay());
+
+        // Reset the receiver to prepare for the next message
+        mySwitchReceiver.resetAvailable();
+    }
+}
+            </code>
+        </pre>
+        
+        <h5 class="pixel">Integration Result</h5>
+
+        <div class="flexrow">
+            <img src="./integration_demo.gif" width="20%" alt="integration demo">
+        </div>
     </div>
 </body>
 
