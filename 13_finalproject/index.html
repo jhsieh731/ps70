@@ -66,6 +66,16 @@
 
         <h3 class="pixel">Final Project: Modular Light Board</h3>
 
+        <br>
+        <hr>
+        <h4 class="pixel">Demo</h4>
+        <div class="flexrow">
+            <iframe width="600" height="400" src="https://youtube.com/embed/8nt9AxZUkVA?si=xizzgsLwf8fFxiMu">
+            </iframe>
+        </div>
+        <hr>
+        <br>
+
         <h4 class="pixel">Part 1: Motivation</h4>
 
         <p>[from <a href="../01_intro">Week 1</a>]</p>
@@ -591,7 +601,7 @@
             <a id="btn" href="../08_cnc/copper.ai" download>Download Adobe Illustrator file</a>
         </div>
 
-        <h4 class="pixel">Part 5: Integrated Project</h5>
+        <h4 class="pixel">Part 5: Integrated Project</h4>
 
         <p>
             For this iteration, I wanted to get the core parts of the final project down, including 
@@ -898,6 +908,165 @@ void loop() {
         <div class="flexrow">
             <img src="./integration_demo.gif" width="20%" alt="integration demo">
         </div>
+
+        <h4 class="pixel">Part 6: Final Version</h4>
+
+        <p>
+            For the last part of my project, I just wanted to ensure a working product and integrate it
+            with my previous lamp pieces. I also wanted to enclose the base/electronics to look more polished.
+            The only new feature I built was interchangeable pieces, so that a user could swap out the 
+            figurine part of the piece.
+        </p>
+
+        <p>
+            First, I soldered the circuit into a protoboard, and I chose to solder sockets for the arduino 
+            as well as any wires coming from the base. While it may have been more secure to solder in the wires
+            from the board, I knew that it would be difficult to swap out the arduino if the entire board 
+            couldn't be removed from beneath the base, as it sits in a little box.
+        </p>
+
+        <!-- <div class="flexrow">
+            <img src="./tbd" width="20%" alt="removable soldered protoboard">
+        </div> -->
+
+        <p>
+            Next I worked on designing swappable pieces. For this, I chose to use slidable pieces that could 
+            swap out of the base (as the pieces are one-to-one mapped with the copper-milled base, as in a certain 
+            piece can only turn on a single square in a base). After a couple of mini-prints, I realized 0.3mm was 
+            the ideal tolerance for the pieces to slide in and out of the base. However, sometimes it was too much 
+            tolerance and led to the pieces falling out, so I added a small hole to glue a magnet to the base of the 
+            figurines. This worked because the piece bases already had magnets to manage connections to the base. 
+        </p>
+
+        <!-- <div class="flexrow">
+            <img src="./tbd" width="20%" alt="swappable piece iterations">
+        </div> -->
+
+        <p>
+            The most annoying part after gluing in magnets to the pieces and assembling them was then assembling 
+            magnets on the base. The copper-to-copper connectionw as extremely fickle, so I spent a really long time 
+            playing around with where to put the magnets as well as retaping little copper strips to try and 
+            improve the connection. I was moderately successful, but sometimes the final product still requires a lot of fiddling 
+            before the connection is made. 
+        </p>
+
+        <p>
+            The last step was to make the box for the base. I used a laser cutter to cut out a finger-jointed 
+            box, held together with wood glue. In my first iteration, I used a drill press to make holes for the wires
+            from the copper-milled base, and I also forgot to make a small hole for the charging cable. My 
+            second iteration was more successful (but only needed because I wood-glued the first iteration way too soon).
+            After assembling the box, inserting hinges, and attaching the protoboard, my project was 99% done.
+        </p>
+
+        <div class="flexrow">
+            <img src="./box.jpg" width="20%" alt="box pics">
+        </div>
+
+        <p>
+            Finally, I made really small tweaks to my code. In an effort to limit how many sends my arduino 
+            was making to the relays (it felt like good practice), I just had the arduino store the last state of 
+            each relay so that it would only send a signal if the state changed.
+        </p>
+
+        <pre style="height: 500px; overflow: scroll;">
+            <code>
+#include &lt;RCSwitch.h&gt;
+
+int transmitterPin = 6; // GPIO 6
+int receiverPin = 7; // GPIO 7
+int switch1Pin = D0;
+int switch2Pin = D1;
+int switch3Pin = D2;
+int switch4Pin = D3;
+
+
+RCSwitch mySwitchTransmitter = RCSwitch();
+
+
+// Switch Class
+class Switch {
+private:
+    int pin;
+    long message; // Unique "on" message per switch
+    long off_message; // Unique "off" message per switch
+    bool lastState; // Last known state of the switch
+
+public:
+    // Constructor
+    Switch(int switchPin, long msg, long off_msg) {
+        pin = switchPin;
+        message = msg;
+        off_message = off_msg;
+        pinMode(pin, INPUT_PULLUP);
+        lastState = digitalRead(pin) == LOW; // Initial state
+    }
+
+    // Check if switch is currently pressed
+    bool isOn() {
+        return digitalRead(pin) == LOW; // LOW means pressed
+    }
+
+    // Send ESP-NOW message only if the state has changed
+    void update() {
+        bool currentState = isOn();
+        if (currentState != lastState) {
+            lastState = currentState; // Update the stored state
+
+            if (currentState) {
+                mySwitchTransmitter.send(message, 24);
+            } else {
+                mySwitchTransmitter.send(off_message, 24);
+            }
+            delay(300); // Avoid rapid multiple sends
+        }
+    }
+};
+
+
+Switch switch1(switch1Pin, 12876364, 12876356);
+Switch switch2(switch2Pin, 12876361, 12876353);
+Switch switch3(switch3Pin, 12876365, 12876357);
+Switch switch4(switch4Pin, 12876363, 12876355);
+
+
+void setup() {
+    Serial.begin(9600); // Start Serial Monitor for debugging
+
+    // Initialize transmitter and receiver
+    mySwitchTransmitter.enableTransmit(transmitterPin);
+    mySwitchReceiver.enableReceive(receiverPin);
+
+    mySwitchTransmitter.setProtocol(1);
+    mySwitchTransmitter.setPulseLength(180);
+    mySwitchTransmitter.setRepeatTransmit(10);
+
+    delay(1000); // Short delay to ensure everything is initialized
+
+}
+
+void loop() {
+    switch1.update();
+    switch2.update();
+    switch3.update();
+    switch4.update();
+}
+        </code>
+        </pre>
+
+        <div class="flexrow">
+            <a id="btn" href="./final_designs.zip" download>Download Final Project Designs</a>
+        </div>
+
+        <p>
+            And here is the final product! (Same as the demo at the top.)
+        </p>
+
+        <div class="flexrow">
+            <iframe width="600" height="400" src="https://youtube.com/embed/8nt9AxZUkVA?si=xizzgsLwf8fFxiMu">
+            </iframe>
+        </div>
+
+
     </div>
 </body>
 
